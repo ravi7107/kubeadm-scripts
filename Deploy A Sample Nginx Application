@@ -1,0 +1,46 @@
+#Create an Nginx deployment. Execute the following directly on the command line. It deploys the pod in the default namespace.
+
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 2 
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80      
+EOF
+
+#Expose the Nginx deployment on a NodePort 32000
+
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector: 
+    app: nginx
+  type: NodePort  
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 32000
+EO
+
+#Check the pod status using the following command.
+kubectl get pods
+
+#Once the deployment is up, you should be able to access the Nginx home page on the allocated NodePort.
+open browser and enter publicIp:portnumber(32000)
