@@ -1,4 +1,4 @@
-#Setup Kubernetes Metrics Server
+#Setup Kubernetes Metrics Server link:https://devopscube.com/setup-kubernetes-cluster-kubeadm/
 
 #To install the metrics server, execute the following metric server manifest file. It deploys metrics server version
 kubectl apply -f https://raw.githubusercontent.com/techiescamp/kubeadm-scripts/main/manifests/metrics-server.yaml
