@@ -1,0 +1,75 @@
+#How to Install and Set Up Kubernetes Dashboard [Step by Step]
+
+#install the Kubernetes dashboard
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+
+
+
+#verify all of the resources were installed successfully by running the kubectl get command. The command below fetches information about all resources on the cluster created in the kubernetes-dashboard (-n) namespace.
+
+kubectl get all -n kubernetes-dashboard
+
+#Edit the  Kubernetes dashboard service created in the previous section using the kubectl edit command, as shown below. Running the below command will open an editable service configuration file displaying the service configuration.
+
+kubectl edit service/kubernetes-dashboard -n kubernetes-dashboard
+
+#Once, the file is opened, change the type of service from ClusterIP to NodePort and save the file as shown below. By default, the service is only available internally to the cluster (ClusterIP) but changing to NodePort exposes the service to the outside.
+
+# Updated the type to NodePort in the service.
+ ports:
+ port: 443 
+ protocol: TCP
+ targetPort: 8443
+ selector:
+ k8s-app: kubernetes-dashboard
+ sessionAffinity: None
+ type: NodePort 
+ 
+ #Find te name of each pod that step two in the previous section created using the kubectl get pods command enumerating all pods across all namespaces with the --all-namespaces parameter
+#see a pod that starts with kubernetes-dashboard.
+
+kubectl get pods --all-namespaces
+
+#Next,delete the Kubernetes dashboard pod using the name found in step three using the kubectl delete command. For this tutorial, the name of the pod is kubernetes-dashboard-78c79f97b4-gjr2l.
+
+kubectl delete pod kubernetes-dashboard-78c79f97b4-gjr2l -n kubernetes-dashboard
+
+#Verify the kubernetes-dashboard service has the correct type by running the kubectl get svc --all-namespace command. You will now notice that the service type has changed to NodePort, and the service exposes the pod’s internal TCP port 30265 using the outside TCP port of 443.
+
+kubectl get svc --all-namespaces
+
+
+#Create serviceaccount.yaml
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-user
+  namespace: kubernetes-dashboard
+  
+#and run serviceaccount.yaml
+kubectl apply -f serviceaccount.yaml
+
+#create ClusterRoleBinding.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admin-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: admin-user
+  namespace: kubernetes-dashboard
+  
+#Run ClusterRoleBinding.yaml
+
+kubectl apply -f ClusterRoleBinding.yaml
+
+#Now we need to find the token we can use to log in. Execute the following command:
+kubectl -n kubernetes-dashboard create token admin-user
+
+#Copy token and paste to dasboard screen selecting as token
