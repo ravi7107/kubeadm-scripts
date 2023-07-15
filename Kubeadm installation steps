@@ -25,6 +25,13 @@ If you missed copying the join command, execute the following command in the mas
 
 kubeadm token create --print-join-command
 
+#run below commands
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+
 #Now execute the kubectl command from the master node to check if the node is added to the master.
 
 kubectl get nodes
@@ -94,3 +101,4 @@ kubectl get pods
 kubectl get services
 
 #Access Nginx application 
+<public-IP>:3200
