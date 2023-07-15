@@ -1,0 +1,96 @@
+#Steps to create Kubeadm cluster#
+
+#### Run the below commands on all the machines (master, slave machines) ####
+sudo hostnamectl set-hostname "manager_machine"
+
+sudo hostnamectl set-hostname "worker_machine_one"
+
+sudo hostnamectl set-hostname "worker_machine_two"
+
+#Clone kubeadm-scripts from git to all master and slave nodes
+
+git clone https://github.com/ravi7107/kubeadm-scripts.git
+
+Run scripts on manager_machine and worker_machine_one,worker_machine_two
+
+./common.sh
+
+Run scripts on manager_machine
+
+./master.sh
+
+#Now, let’s join the worker node to the master node using the Kubeadm join command you have got in the output while setting up the master node.
+
+If you missed copying the join command, execute the following command in the master node to recreate the token with the join command.
+
+kubeadm token create --print-join-command
+
+#Now execute the kubectl command from the master node to check if the node is added to the master.
+
+kubectl get nodes
+
+#In the above command, the ROLE is <none> for the worker nodes. You can add a label to the worker node using the following command. Replace worker-node01 with the hostname of the worker node you want to label.
+
+kubectl label node worker-node01  node-role.kubernetes.io/worker=worker
+
+#You can further add more nodes with the same join command.
+
+#Kubeadm doesn’t install metrics server component during its initialization. We have to install it separately.
+
+kubectl apply -f https://raw.githubusercontent.com/techiescamp/kubeadm-scripts/main/manifests/metrics-server.yaml
+
+#Once the metrics server objects are deployed, it takes a minute for you to see the node and pod metrics using the top command.
+kubectl top nodes
+
+#Now that we have all the components to make the cluster and applications work, let’s deploy a sample Nginx application and see if we can access it over a NodePort
+#Create an Nginx deployment. Execute the following directly on the command line. It deploys the pod in the default namespace.
+
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 2 
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80      
+EOF
+
+#Expose the Nginx deployment on a NodePort 32000
+
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector: 
+    app: nginx
+  type: NodePort  
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 32000
+EOF
+
+#Check the pod status using the following command.
+
+kubectl get pods
+
+#Once the deployment is up, you should be able to access the Nginx home page on the allocated NodePort.
+
+#to check ports
+kubectl get services
+
+#Access Nginx application 
