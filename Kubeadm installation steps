@@ -102,3 +102,6 @@ kubectl get services
 
 #Access Nginx application 
 <public-IP>:3200
+
+#To access Token
+kubectl -n kubernetes-dashboard create token admin-user
